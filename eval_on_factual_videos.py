@@ -129,6 +129,12 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
 
             f.write(f"{frame_idx},{vis},{cx_out},{cy_out}\n")
 
+            # Vẽ vòng tròn lên frame
+            if cx_out > 0 and cy_out > 0:
+                cv2.circle(img, (cx_out, cy_out), 5, (0, 0, 255), -1)
+            # Ghi frame đã được vẽ vào video
+            out.write(img)
+
             # Evaluate with ground truth
             if frame_idx in gt_data:
                 vis_gt, x_gt, y_gt = gt_data[frame_idx]
@@ -147,7 +153,6 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                 total_FP2 += fp2
                 total_FN += fn
 
-        # Vẽ vòng tròn và ghi kết quả vào file sẽ được làm sau khi đo thời gian
 
     cap.release()
     out.release()
