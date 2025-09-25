@@ -19,7 +19,10 @@ def read_ground_truth(csv_file):
     ground_truth = {}
     for frame_num, row in gt_data.iterrows():
         visibility = int(row['visibility'])
-        x, y = int(row['x-coordinate']), int(row['y-coordinate'])
+        if visibility == 0:
+            x, y = 0, 0
+        else:
+            x, y = int(row['x-coordinate']), int(row['y-coordinate'])
         ground_truth[frame_num] = (visibility, x, y)
     return ground_truth
 
