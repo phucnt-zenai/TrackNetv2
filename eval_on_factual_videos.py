@@ -84,12 +84,29 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
 
         if not frame_queue:
             break
-
-        # Đo thời gian bắt đầu xử lý cho frame
-        frame_start_time = time.time()
+        
+        if len(frame_queue) % num_frame != 0:
+            frame_queue = []
+            # Record the length of remain frames
+            num_final_frame = len(frame_queue)
+            # Adjust the sample timestampe of cap
+            frame_count = frame_count - num_frame*batch_size
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count)
+            # Re-sample mini batch
+            for _ in range(num_frame*batch_size):
+                success, frame = cap.read()
+                if not success:
+                    break
+                else:
+                    frame_count += 1
+                    frame_queue.append(frame)
+            assert len(frame_queue) % num_frame == 0
 
         # Preprocess frames
         x = get_frame_unit(frame_queue, num_frame)
+
+        # Đo thời gian bắt đầu xử lý cho frame
+        frame_start_time = time.time()
 
         with torch.no_grad():
             y_pred = model(x.cuda()).cpu().numpy()

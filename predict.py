@@ -6,10 +6,6 @@ import numpy as np
 import pandas as pd
 
 import torch
-from torch.utils.data import DataLoader
-
-from tqdm import tqdm
-from dataset import Badminton_Dataset
 from utils import *
 
 parser = argparse.ArgumentParser()
