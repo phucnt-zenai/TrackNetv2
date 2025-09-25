@@ -17,8 +17,7 @@ WIDTH = 512
 def read_ground_truth(csv_file):
     gt_data = pd.read_csv(csv_file)
     ground_truth = {}
-    for _, row in gt_data.iterrows():
-        frame_num = int(row['file name'])
+    for frame_num, row in gt_data.iterrows():
         visibility = int(row['visibility'])
         x, y = int(row['x-coordinate']), int(row['y-coordinate'])
         ground_truth[frame_num] = (visibility, x, y)
