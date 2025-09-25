@@ -12,7 +12,7 @@ from dataset import Badminton_Dataset
 from utils import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_file', type=str, default='TrackNetV2/model_best.pt')
+parser.add_argument('--model_file', type=str, default='models/model_best_v2.pt')
 parser.add_argument('--batch_size', type=int, default=20)
 parser.add_argument('--tolerance', type=float, default=4)
 parser.add_argument('--save_dir', type=str, default='output')

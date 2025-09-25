@@ -1,37 +1,6 @@
 import torch
 import torch.nn as nn
 
-class SEAttention(nn.Module):
-    def __init__(self, in_channels, reduction=16):
-        super(SEAttention, self).__init__()
-        self.in_channels = in_channels
-        self.reduction = reduction
-        
-        # Squeeze operation: Global Average Pooling
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        
-        # Excitation operation: Fully connected layers
-        self.fc1 = nn.Linear(in_channels, in_channels // reduction, bias=False)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(in_channels // reduction, in_channels, bias=False)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        batch_size, channels, _, _ = x.size()
-        
-        # Squeeze step
-        squeeze = self.avg_pool(x).view(batch_size, channels)
-        
-        # Excitation step
-        excitation = self.fc1(squeeze)
-        excitation = self.relu(excitation)
-        excitation = self.fc2(excitation)
-        excitation = self.sigmoid(excitation).view(batch_size, channels, 1, 1)
-        
-        # Scale input feature maps
-        return x * excitation
-
-
 class Conv2DBlock(nn.Module):
     """ Conv + ReLU + BN"""
     def __init__(self, in_dim, out_dim, kernel_size, padding='same', bias=True, **kwargs):
@@ -90,7 +59,7 @@ class TrackNetV2(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        """ model input shape: (F*3, 288, 512), output shape: (F, 288, 512) """
+        """ model input shape: (F*3, 288, 512), output shape: (F, 288, 512) -> 3in - 3out """
         x1 = self.down_block_1(x)                                   # (64, 288, 512)
         x = nn.MaxPool2d((2, 2), stride=(2, 2))(x1)                 # (64, 144, 256)
         x2 = self.down_block_2(x)                                   # (128, 144, 256)

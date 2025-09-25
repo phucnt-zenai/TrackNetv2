@@ -14,7 +14,7 @@ from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video_file', type=str)
-parser.add_argument('--model_file', type=str, default='TrackNetV2/model_best.pt')
+parser.add_argument('--model_file', type=str, default='models/model_best_v2.pt')
 parser.add_argument('--num_frame', type=int, default=3)
 parser.add_argument('--batch_size', type=int, default=10)
 parser.add_argument('--save_dir', type=str, default='pred_result')
