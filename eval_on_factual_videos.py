@@ -7,7 +7,7 @@ import torch
 from tqdm import tqdm
 import time
 
-from utils import get_model, get_object_center, get_metric
+from utils import get_model, get_object_center, get_metric, get_frame_unit
 from utils import frame_first_Gray  # Nếu dùng input_type = '3d'
 import math
 
@@ -25,17 +25,6 @@ def read_ground_truth(csv_file):
             x, y = int(row['x-coordinate']), int(row['y-coordinate'])
         ground_truth[frame_num] = (visibility, x, y)
     return ground_truth
-
-def get_frame_unit(frame_queue, num_frame):
-    unit = []
-    for i in range(0, len(frame_queue), num_frame):
-        frames = frame_queue[i:i+num_frame]
-        frames_resized = [cv2.resize(f, (WIDTH, HEIGHT)) for f in frames]
-        frames_np = np.stack(frames_resized, axis=0)
-        frames_np = frames_np.transpose(0, 3, 1, 2)  # (F, C, H, W)
-        frames_np = torch.tensor(frames_np) / 255.0
-        unit.append(frames_np)
-    return torch.stack(unit)  # (B, F, C, H, W)
 
 def get_confusion_matrix(y_pred_map, y_true_map, y_coor_map, tolerance = 4):
     TP, TN, FP1, FP2, FN = 0, 0, 0, 0, 0
