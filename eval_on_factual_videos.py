@@ -4,15 +4,14 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
 import time
 
 from utils import get_model, get_object_center, get_metric, get_frame_unit
-from utils import frame_first_Gray  # Nếu dùng input_type = '3d'
 import math
 
 HEIGHT = 288
 WIDTH = 512
+
 
 def read_ground_truth(csv_file):
     gt_data = pd.read_csv(csv_file)
@@ -68,14 +67,15 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
     f.write('Frame,Visibility,X,Y\n')
 
     success = True
-    frame_count = 0
+    frame_count = 0  # counting variable to help frame_queue only contain num_frame*batch_size (3) frames in each iteration
 
     total_TP, total_TN, total_FP1, total_FP2, total_FN = 0, 0, 0, 0, 0
     total_frame_time = 0  # Tổng thời gian cho mỗi frame
 
+    ### Đọc Frames
     while success:
         frame_queue = []
-        for _ in range(num_frame * batch_size):
+        for _ in range(num_frame * batch_size):  # 3*1 = 3 frames
             success, frame = cap.read()
             if not success:
                 break
@@ -102,7 +102,7 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                     frame_queue.append(frame)
             assert len(frame_queue) % num_frame == 0
 
-        # Preprocess frames
+        # Concat 3 frames to form input: (B, H, W, 3*F)
         x = get_frame_unit(frame_queue, num_frame)
 
         # Đo thời gian bắt đầu xử lý cho frame
@@ -152,7 +152,6 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                 total_FP1 += fp1
                 total_FP2 += fp2
                 total_FN += fn
-
 
     cap.release()
     out.release()
