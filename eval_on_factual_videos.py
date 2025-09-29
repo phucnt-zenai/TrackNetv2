@@ -105,7 +105,9 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
         # Concat 3 frames to form input: (B, H, W, 3*F)
         x = get_frame_unit(frame_queue, num_frame)
 
-        # Đo thời gian bắt đầu xử lý cho frame
+        # ==== VÒNG FOR 1: chỉ inference và hậu xử lý ====
+        coords_list = []  # Lưu dữ liệu để xử lý ở vòng sau
+
         frame_start_time = time.time()
 
         with torch.no_grad():
@@ -118,33 +120,39 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
             frame_idx = frame_count - len(frame_queue) + i
             pred_mask = y_pred_bin[i]
             img = frame_queue[i]
+
             cx, cy = get_object_center(pred_mask)
             cx_out, cy_out = int(cx * ratio), int(cy * ratio)
             vis = 1 if cx_out > 0 and cy_out > 0 else 0
 
-            # Đo thời gian kết thúc sau khi tính toán tọa độ
-            frame_end_time = time.time()
-            frame_duration = frame_end_time - frame_start_time
-            total_frame_time += frame_duration
+            # Chỉ lưu để dùng ở vòng sau
+            coords_list.append((frame_idx, img, pred_mask, cx_out, cy_out, vis))
 
+        frame_end_time = time.time()
+        total_frame_time += (frame_end_time - frame_start_time) / len(frame_queue)
+
+        # ==== VÒNG FOR 2: I/O, vẽ, ghi file, đánh giá ====
+        for frame_idx, img, pred_mask, cx_out, cy_out, vis in coords_list:
+            # Ghi kết quả ra file
             f.write(f"{frame_idx},{vis},{cx_out},{cy_out}\n")
 
             # Vẽ vòng tròn lên frame
             if cx_out > 0 and cy_out > 0:
                 cv2.circle(img, (cx_out, cy_out), 5, (0, 0, 255), -1)
-            # Ghi frame đã được vẽ vào video
+
+            # Ghi frame vào video
             out.write(img)
 
-            # Evaluate with ground truth
+            # Evaluate với ground truth
             if frame_idx in gt_data:
                 vis_gt, x_gt, y_gt = gt_data[frame_idx]
+                gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
+
                 if vis_gt == 1:
-                    gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
                     gx, gy = int(x_gt / ratio), int(y_gt / ratio)
                     gt_map[gy, gx] = 255
                     tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [gx, gy], tolerance)
                 else:
-                    gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
                     tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [0, 0], tolerance)
 
                 total_TP += tp
@@ -152,6 +160,7 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                 total_FP1 += fp1
                 total_FP2 += fp2
                 total_FN += fn
+
 
     cap.release()
     out.release()
