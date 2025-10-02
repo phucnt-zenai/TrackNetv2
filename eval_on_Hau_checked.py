@@ -17,11 +17,11 @@ def read_ground_truth(csv_file):
     gt_data = pd.read_csv(csv_file)
     ground_truth = {}
     for frame_num, row in gt_data.iterrows():
-        visibility = int(row['Visibility'])
+        visibility = int(row['visibility'])
         if visibility == 0:
             x, y = 0, 0
         else:
-            x, y = int(row['X']), int(row['Y'])
+            x, y = int(row['x-coordinate']), int(row['y-coordinate'])
         ground_truth[frame_num] = (visibility, x, y)
     return ground_truth
 
@@ -173,7 +173,7 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
 
     return total_TP, total_TN, total_FP1, total_FP2, total_FN, avg_frame_time
 
-def process_all_videos(data_dir, model, num_frame, batch_size, save_dir):
+def process_all_videos(data_dir, model, num_frame, batch_size, save_dir, tolerance=4):
     total_TP = total_TN = total_FP1 = total_FP2 = total_FN = 0
     total_frame_time_all = 0  # Tổng thời gian cho tất cả các frame
     total_frame_count = 0  # Tổng số lượng frame đã xử lý
@@ -182,12 +182,16 @@ def process_all_videos(data_dir, model, num_frame, batch_size, save_dir):
         video_files = [f for f in files if f.endswith('.mp4')]
         for video_file in video_files:
             video_path = os.path.join(root, video_file)
-            csv_file = video_path.replace('.mp4', '.csv')
+            csv_dir = os.path.dirname(video_path)
+            csv_file = ''
+            for file in os.listdir(csv_dir):
+                if file.endswith('.csv'):
+                    csv_file = os.path.join(csv_dir, file)
             if not os.path.exists(csv_file):
                 print(f"[!] Thiếu ground truth CSV cho {video_path}")
                 continue
             print(f"[✓] Đang xử lý: {video_path}")
-            TP, TN, FP1, FP2, FN, avg_frame_time = process_video(video_path, csv_file, model, num_frame, batch_size, save_dir)
+            TP, TN, FP1, FP2, FN, avg_frame_time = process_video(video_path, csv_file, model, num_frame, batch_size, save_dir, tolerance)
             total_TP += TP
             total_TN += TN
             total_FP1 += FP1
@@ -213,6 +217,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_frame', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_dir', type=str, default='pred_result')
+    parser.add_argument('--tolerance', type=int, default=4)
     args = parser.parse_args()
 
     # Load model
@@ -224,4 +229,4 @@ if __name__ == '__main__':
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
-    process_all_videos(args.data_dir, model, args.num_frame, args.batch_size, args.save_dir)
+    process_all_videos(args.data_dir, model, args.num_frame, args.batch_size, args.save_dir, args.tolerance)
