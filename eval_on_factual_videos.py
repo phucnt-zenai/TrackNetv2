@@ -207,7 +207,7 @@ def process_all_videos(data_dir, model, num_frame, batch_size, save_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='/kaggle/input/badminton-testset/test_dataset', help='Thư mục chứa match1/, match2/, ...')
+    parser.add_argument('--data_dir', type=str, default='/kaggle/input/badminton-testset', help='Thư mục chứa match1/, match2/, ...')
     parser.add_argument('--model_file', type=str, default='models/model_best_v2.pt')
     parser.add_argument('--num_frame', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=1)
