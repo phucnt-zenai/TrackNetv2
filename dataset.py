@@ -35,7 +35,7 @@ class Badminton_Dataset(Dataset):
         self.slideing_step = slideing_step
 
         # where to save/load generated index files
-        self.work_dir = '/kaggle/working/TrackNetV2_Dataset'
+        self.work_dir = '/kaggle/working/TrackNetv2/TrackNetV2_Dataset'
         os.makedirs(self.work_dir, exist_ok=True)
 
         npz_name = f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz'
