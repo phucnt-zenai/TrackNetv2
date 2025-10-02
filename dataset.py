@@ -11,27 +11,43 @@ from utils import *
 
 
 class Badminton_Dataset(Dataset):
-    def __init__(self, meta_data=data_dir, split='train', mode='2d', num_frame=3, slideing_step=1, frame_dir=None, debug=False):
+    def __init__(self, root_dir=['/kaggle/input/shuttlecock-tracknetv2'], split='train', mode='2d', num_frame=3, slideing_step=1, frame_dir=None, debug=False, rate=1.0, seed=42):
         """
         Args:
-            meta_data (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
+            root_dir (string): Directory with all the images (default reads from /kaggle/input/shuttlecock-tracknetv2).
+            split (string): name of the split or subfolder inside root_dir (e.g., 'Train', 'Val', 'test', or any custom mode).
+            Saved index files (.npz) are stored under /kaggle/working.
         """
         self.HEIGHT = 288
         self.WIDTH = 512
         self.mag = 1
         self.sigma = 2.5
 
-        self.root_dir = root_dir
+        #
+        self.rate = rate
+        self.seed = seed
+
+        self.root_dirs = root_dir
+        #####
         self.split = split
         self.mode = mode
         self.num_frame = num_frame
         self.slideing_step = slideing_step
 
-        if not os.path.exists(os.path.join(self.root_dir, f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz')):
+        # where to save/load generated index files
+        self.work_dir = '/kaggle/working/TrackNetV2_Dataset'
+        os.makedirs(self.work_dir, exist_ok=True)
+
+        npz_name = f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz'
+        npz_path_work = os.path.join(self.work_dir, npz_name)
+        
+
+        
+        if not os.path.exists(npz_path_work):
+            # generate from image folders under input root and save to work dir
             self._gen_frame_files()
-        data_dict = np.load(os.path.join(self.root_dir, f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz'))
+        # load from work dir
+        data_dict = np.load(npz_path_work, allow_pickle=True)
         
         if debug:
             num_debug = 256
@@ -45,35 +61,93 @@ class Badminton_Dataset(Dataset):
             self.coordinates = data_dict['coordinates'] # (N, 3, 2)
             self.visibility = data_dict['visibility'] # (N, 3)
 
-    def _get_rally_dirs(self):
-        match_dirs = list_dirs(os.path.join(self.root_dir, self.split))
-        match_dirs = sorted(match_dirs, key=lambda s: int(s.split('match')[-1]))
-        rally_dirs = []
-        for match_dir in match_dirs:
-            rally_dir = list_dirs(os.path.join(match_dir, 'frame'))
-            rally_dirs.extend(rally_dir)
+    def _get_rally_dirs(self, rate=1.0, seed=42):
+        """
+        Collect rally directories depending on self.split.
+        Supports arbitrary split names: if a subfolder named self.split exists under root_dir, use it.
+        Otherwise, if split == 'test' look for 'Test' folder; else scan all subfolders except 'Test'.
+        """
+        match_dirs = []
+
+        for root_dir in self.root_dirs:
         
+            # If there is a subfolder exactly matching split under root_dir, use that
+            split_path = os.path.join(root_dir, self.split)
+            if os.path.isdir(split_path):
+                base_dirs = [split_path]
+                
+            else:
+                # common case: user requested 'test' but folder named 'Test' (case-sensitive)
+                if self.split.lower() == 'test' and os.path.isdir(os.path.join(root_dir, 'Test')):
+                    base_dirs = [os.path.join(root_dir, 'Test')]
+                else:
+                    # fallback: scan all top-level subfolders under root_dir excluding 'Test' (so we don't double-include)
+                    base_dirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir)
+                                 if os.path.isdir(os.path.join(root_dir, d)) and d != 'Test' and d!= 'Amateur']
+            print('base_dirs: ', base_dirs)
+
+            for base in base_dirs:
+                # list_dirs is assumed to return list of match directories under base (from utils)
+                try:
+                    sub_match_dirs = list_dirs(base)
+                except Exception:
+                    # if list_dirs is not appropriate, try collecting direct subdirs that contain a 'frame' folder
+                    sub_match_dirs = []
+                    for d in os.listdir(base):
+                        cand = os.path.join(base, d)
+                        frame_folder = os.path.join(cand, 'frame')
+                        if os.path.isdir(frame_folder):
+                            sub_match_dirs.append(frame_folder)
+                # extend the global list
+                match_dirs.extend(sub_match_dirs)
+                
+        print('match_dirs: ',match_dirs)
+        
+        # match_dirs now contains paths like .../matchX/frame
+        # we will choose 30% rallies per each match, in seed condition
+        rally_dirs = []
+        rng = np.random.default_rng(seed)
+        
+        for match_dir in match_dirs:
+            rally_dir = list_dirs(os.path.join(match_dir,'frame'))
+            
+            k = max(1, int(len(rally_dir) * rate))
+            sampled_rallies = list(rng.choice(rally_dir, size=k, replace=False))
+            
+            rally_dirs.extend(sampled_rallies)
+
+        print('Num of rally_dirs: ', len(rally_dirs))
         return rally_dirs
 
     def _gen_frame_files(self):
-        rally_dirs = self._get_rally_dirs()
+        rally_dirs = self._get_rally_dirs(rate = self.rate, seed = self.seed)
         frame_files = np.array([]).reshape(0, self.num_frame)
         coordinates = np.array([], dtype=np.float32).reshape(0, self.num_frame, 2)
         visibility = np.array([], dtype=np.float32).reshape(0, self.num_frame)
 
         # Generate input sequences from each rally
         for rally_dir in tqdm(rally_dirs):
-            match_dir, rally_id = parse.parse('{}/frame/{}', rally_dir)
+            #print('rally_dir', rally_dir)
+            # rally_dir expected like .../matchX/frame/<rally_id>  OR could be .../matchX/frame if already at frame dir.
+            try:
+                match_dir, rally_id = parse.parse('{}/frame/{}', rally_dir)
+            except Exception:
+                # fallback: try to find parent match_dir
+                match_dir = os.path.dirname(os.path.dirname(rally_dir))
+                rally_id = os.path.basename(rally_dir)
             csv_file = os.path.join(match_dir, 'csv', f'{rally_id}_ball.csv')
             try:
                 label_df = pd.read_csv(csv_file, encoding='utf8').sort_values(by='Frame').fillna(0)
-            except:
-                print(f'Label file {rally_id}_ball.csv not found.')
+            except Exception:
+                print(f'Label file {csv_file} not found. Skipping rally {rally_dir}.')
                 continue
             
             frame_file = np.array([os.path.join(rally_dir, f'{f_id}.png') for f_id in label_df['Frame']])
+            
             x, y, vis = np.array(label_df['X']), np.array(label_df['Y']), np.array(label_df['Visibility'])
-            assert len(frame_file) == len(x) == len(y) == len(vis)
+            if not (len(frame_file) == len(x) == len(y) == len(vis)):
+                print(f'Length mismatch in {rally_dir}. Skipping.')
+                continue
 
             # Sliding on the frame sequence
             for i in range(0, len(frame_file)-self.num_frame, self.slideing_step):
@@ -93,7 +167,10 @@ class Badminton_Dataset(Dataset):
                     coordinates = np.concatenate((coordinates, [tmp_coor]), axis=0)
                     visibility = np.concatenate((visibility, [tmp_vis]), axis=0)
         
-        np.savez(os.path.join(self.root_dir, f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz'), filename=frame_files, coordinates=coordinates, visibility=visibility)
+        # Save to /kaggle/working for reuse
+        npz_name = f'f{self.num_frame}_s{self.slideing_step}_{self.split}.npz'
+        save_path = os.path.join(self.work_dir, npz_name)
+        np.savez(save_path, filename=frame_files, coordinates=coordinates, visibility=visibility)
 
     def _gen_frame_unit(self, frame_dir):
         frame_files = np.array([]).reshape(0, self.num_frame)

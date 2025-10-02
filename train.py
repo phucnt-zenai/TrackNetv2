@@ -41,7 +41,7 @@ save_dir = f'{save_dir}_debug' if debug else save_dir
 display_step = 4 if debug else 100
 
 if resume_training:
-    checkpoint = torch.load(f'{save_dir}/model_cur.pt')
+    checkpoint = torch.load(f'/kaggle/input/ckpt-tracknet/model_cur_8epochs_v2.pt')
     param_dict = checkpoint['param_dict']
     model_name = param_dict['model_name']
     num_frame = param_dict['num_frame']
