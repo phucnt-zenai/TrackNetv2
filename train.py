@@ -21,6 +21,7 @@ parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--tolerance', type=float, default=4)
 parser.add_argument('--save_dir', type=str, default='exp')
 parser.add_argument('--resume_training', action='store_true', default=False)
+parser.add_argument('--resume_ckpt', type=str, default='/kaggle/input/ckpt-tracknet/model_best_v2.pt')
 parser.add_argument('--debug', action='store_true', default=False)
 args = parser.parse_args()
 param_dict = vars(args)
@@ -41,7 +42,7 @@ save_dir = f'{save_dir}_debug' if debug else save_dir
 display_step = 4 if debug else 100
 
 if resume_training:
-    checkpoint = torch.load(f'/kaggle/input/ckpt-tracknet/model_cur_8epochs_v2.pt')
+    checkpoint = torch.load(args.resume_ckpt)
     param_dict = checkpoint['param_dict']
     model_name = param_dict['model_name']
     num_frame = param_dict['num_frame']
