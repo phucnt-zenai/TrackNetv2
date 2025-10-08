@@ -45,7 +45,7 @@ def get_confusion_matrix(y_pred_map, y_true_map, y_coor_map, tolerance = 4):
     return TP, TN, FP1, FP2, FN
 
 def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, input_type='3d', tolerance=4):
-    folder_name = os.path.basename(os.path.dirname(video_file))
+    folder_name = os.path.basename(os.path.dirname(os.path.dirname(video_file)))
     video_name = os.path.basename(video_file)[:-4]
     video_format = video_file[-3:]
     out_video_file = f'{save_dir}/{folder_name}_{video_name}_pred.{video_format}'
