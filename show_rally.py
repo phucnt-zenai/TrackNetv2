@@ -69,7 +69,7 @@ for step, (i, x, y, c) in enumerate(data_prob):
     x, y = x.detach().cpu().numpy(), y.numpy()
     x = frame_first_RGB(x, input_type)
     y_pred = y_pred.detach().cpu().numpy()
-    h_pred = y_pred > 0.5
+    h_pred = y_pred > 0.5   
     y_pred = y_pred * 255.
     h_pred = h_pred * 255.
     y_pred = y_pred.astype('uint8')
