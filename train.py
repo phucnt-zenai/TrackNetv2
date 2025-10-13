@@ -16,7 +16,7 @@ from utils import *
 def total_trainable_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-def inference_latency(model, input_size=(9,288,512), device='cuda', n_warmup=10, n_run=50):
+def inference_latency(model, input_size=(1,3*3,288,512), device='cuda', n_warmup=10, n_run=50):
     model.eval().to(device)    
     input = torch.randn(input_size).to(device)
 
@@ -118,7 +118,7 @@ if prune:
     print(f'Before pruning, Total params: {total_trainable_params(model)}, Latency: {inference_latency(model)}')
     pruner = tp.pruner.MagnitudePruner(
         model,
-        example_inputs=torch.randn(3*3, 288, 512).cuda(),
+        example_inputs=torch.randn(1,3*3, 288, 512).cuda(),
         importance=tp.importance.MagnitudeImportance(p=2),
         pruning_ratio=0.9,
         iterative_steps=iterative_steps,
