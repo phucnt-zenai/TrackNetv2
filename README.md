@@ -1,3 +1,5 @@
+A copy of repo: https://github.com/wolfyeva/TrackNetV2
+
 ### DOWNLOAD our Model weight
 Our pre-tained model weight can be download [HERE](https://drive.google.com/file/d/1_mrzOAAGsn2DAI7T1igJ9pYKabV278lb/view?usp=sharing).
 Please put it in `models/`
