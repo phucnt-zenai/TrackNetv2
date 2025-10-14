@@ -46,6 +46,7 @@ parser.add_argument('--debug', action='store_true', default=False)
 parser.add_argument('--prune', action='store_true', default=False)
 parser.add_argument('--iterative_steps', type=int, default=10)
 parser.add_argument('--fine_tune_epochs', type=int, default=1)
+parser.add_argument('--sparsity', type=float, default=0.5)
 args = parser.parse_args()
 param_dict = vars(args)
 
@@ -66,6 +67,7 @@ display_step = 4 if debug else 100
 prune = args.prune
 iterative_steps = args.iterative_steps
 fine_tune_epochs = args.fine_tune_epochs
+sparsity = args.sparsity
 
 
 if resume_training:
@@ -120,7 +122,7 @@ if prune:
         model,
         example_inputs=torch.randn(1,3*3, 288, 512).cuda(),
         importance=tp.importance.MagnitudeImportance(p=2),
-        pruning_ratio=0.9,
+        pruning_ratio=sparsity,
         iterative_steps=iterative_steps,
         ignored_layers=[model.predictor, model.sigmoid],
     ) 
