@@ -136,13 +136,13 @@ if prune:
         for j in range(fine_tune_epochs):
             loss = train(j, model, optimizer, WeightedBinaryCrossEntropy, train_loader, input_type, display_step, save_dir)
             loss_list.append(loss)
-            torch.save(model, f'{save_dir}/pruning_model_step_{i}_epoch_{j}.pt')
+            torch.save(model, f'{save_dir}/pruning_model_step_{i+1}_epoch_{j+1}.pt')
 
         accuracy, precision, recall, TP, TN, FP1, FP2, FN = evaluation(model, eval_loader, tolerance, input_type)
         TP, TN, FP1, FP2, FN = len(TP), len(TN), len(FP1), len(FP2), len(FN)
 
-        print(f'Iter{i} - Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - TP: {TP}, TN: {TN}, FP1: {FP1}, FP2: {FP2}, FN: {FN}')
-        print(f'Iter{i} - Total_params: {total_trainable_params(model)} - Latency_ms: {inference_latency(model)}ms')
+        print(f'Iter{i+1} - Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - TP: {TP}, TN: {TN}, FP1: {FP1}, FP2: {FP2}, FN: {FN}')
+        print(f'Iter{i+1} - Total_params: {total_trainable_params(model)} - Latency_ms: {inference_latency(model)}ms')
 
 
 else:
