@@ -47,6 +47,8 @@ parser.add_argument('--prune', action='store_true', default=False)
 parser.add_argument('--iterative_steps', type=int, default=10)
 parser.add_argument('--fine_tune_epochs', type=int, default=1)
 parser.add_argument('--sparsity', type=float, default=0.5)
+parser.add_argument('--resume_pruning_ckpt', type=str, default='/kaggle/input/ckpt-15percentage-pruning/exp/pruning_model_step_1_epoch_5.pt')
+parser.add_argument('--resume_pruning', action='store_true', default=False)
 args = parser.parse_args()
 param_dict = vars(args)
 
@@ -68,7 +70,8 @@ prune = args.prune
 iterative_steps = args.iterative_steps
 fine_tune_epochs = args.fine_tune_epochs
 sparsity = args.sparsity
-
+resume_pruning = args.resume_pruning
+resume_pruning_ckpt = args.resume_pruning_ckpt
 
 if resume_training:
     checkpoint = torch.load(args.resume_ckpt)
@@ -98,10 +101,14 @@ print("Test dataset length:", len(eval_test_dataset))
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=batch_size, drop_last=True, pin_memory=True)
 eval_loader = DataLoader(eval_test_dataset, batch_size=batch_size, shuffle=False, num_workers=batch_size, drop_last=False, pin_memory=True)
 
-# create model
-model = get_model(model_name, num_frame, input_type).cuda()
-model_summary(model, model_name)
+if resume_pruning:
+    model = torch.load(resume_pruning_ckpt).cuda()
+    print(f'Resume pruning from {resume_pruning_ckpt}.')
+else:
+    model = get_model(model_name, num_frame, input_type).cuda()
+    model_summary(model, model_name)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 if not resume_training:
     loss_list = []
     test_acc_dict = {'TP':[], 'TN': [], 'FP1': [], 'FP2': [], 'FN': [], 'accuracy': [], 'precision': [], 'recall': []}
@@ -115,6 +122,7 @@ else:
     start_epoch = checkpoint['epoch'] + 1
     max_test_acc = np.max(test_acc_dict['accuracy'])
     print(f'Resume training from epoch {start_epoch}.')
+
 
 if prune:
     print(f'Before pruning, Total params: {total_trainable_params(model)}, Latency: {inference_latency(model)}')
@@ -143,7 +151,6 @@ if prune:
 
         print(f'Iter{i+1} - Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - TP: {TP}, TN: {TN}, FP1: {FP1}, FP2: {FP2}, FN: {FN}')
         print(f'Iter{i+1} - Total_params: {total_trainable_params(model)} - Latency_ms: {inference_latency(model)}ms')
-
 
 else:
     # training loop
@@ -194,3 +201,6 @@ else:
 
     print(f'runtime: {(time.time() - train_start_time) / 3600.:.2f} hrs')
     print('Done......')
+
+
+    #### Nếu định cắt thì phải cắt đối xứng cả 2 bên, nên là cần sửa kỹ việc group lại.
