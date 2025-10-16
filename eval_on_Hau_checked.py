@@ -218,15 +218,21 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_dir', type=str, default='pred_result')
     parser.add_argument('--tolerance', type=int, default=4)
+    parser.add_argument('--pruned_model_ckpt', type=str, default='/kaggle/input/ckpt-15percentage-pruning/exp/model_best.pt')
+    parser.add_argument('--prune', action='store_true', default=False)
+
     args = parser.parse_args()
 
-    # Load model
-    checkpoint = torch.load(args.model_file)
-    param_dict = checkpoint['param_dict']
-    model_name = param_dict['model_name']
-    input_type = param_dict['input_type']
-    model = get_model(model_name, args.num_frame, input_type).cuda()
-    model.load_state_dict(checkpoint['model_state_dict'])
+    if args.pruned_model:
+        model = torch.load(args.pruned_model_ckpt, weights_only=False).cuda()
+    else:
+        # Load model
+        checkpoint = torch.load(args.model_file)
+        param_dict = checkpoint['param_dict']
+        model_name = param_dict['model_name']
+        input_type = param_dict['input_type']
+        model = get_model(model_name, args.num_frame, input_type).cuda()
+        model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
     process_all_videos(args.data_dir, model, args.num_frame, args.batch_size, args.save_dir, args.tolerance)
