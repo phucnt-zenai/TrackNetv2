@@ -102,7 +102,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, nu
 eval_loader = DataLoader(eval_test_dataset, batch_size=batch_size, shuffle=False, num_workers=batch_size, drop_last=False, pin_memory=True)
 
 if resume_pruning:
-    model = torch.load(resume_pruning_ckpt).cuda()
+    model = torch.load(resume_pruning_ckpt, weights_only=False).cuda()
     print(f'Resume pruning from {resume_pruning_ckpt}.')
 else:
     model = get_model(model_name, num_frame, input_type).cuda()
