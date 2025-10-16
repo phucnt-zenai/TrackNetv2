@@ -142,7 +142,8 @@ if prune:
 
         for group in pruner.step(interactive=True):
             group.prune()
-
+            
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         for j in range(fine_tune_epochs):
             loss = train(j, model, optimizer, WeightedBinaryCrossEntropy, train_loader, input_type, display_step, save_dir)
             loss_list.append(loss)
