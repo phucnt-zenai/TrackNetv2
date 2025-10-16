@@ -218,13 +218,14 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_dir', type=str, default='pred_result')
     parser.add_argument('--tolerance', type=int, default=4)
-    parser.add_argument('--pruned_model_ckpt', type=str, default='/kaggle/input/ckpt-15percentage-pruning/exp/model_best.pt')
+    parser.add_argument('--pruned_model_ckpt', type=str, default='/kaggle/input/architect-pruned-model-15per/pruning_model_step_1_epoch_5.pt')
     parser.add_argument('--prune', action='store_true', default=False)
 
     args = parser.parse_args()
 
     if args.prune:
-        model = torch.load(args.pruned_model_ckpt, weights_only=False).cuda()
+        model = torch.load(args.pruned_model_ckpt, weights_only=False)
+        model.load_state_dict(torch.load(args.model_file)).cuda()
     else:
         # Load model
         checkpoint = torch.load(args.model_file)
