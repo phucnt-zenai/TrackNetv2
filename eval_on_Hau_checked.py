@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.pruned_model:
+    if args.prune:
         model = torch.load(args.pruned_model_ckpt, weights_only=False).cuda()
     else:
         # Load model
