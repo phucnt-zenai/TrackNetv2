@@ -223,17 +223,17 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    checkpoint = torch.load(args.model_file)
     if args.prune:
         model = torch.load(args.pruned_model_ckpt, weights_only=False)
-        model.load_state_dict(torch.load(args.model_file)).cuda()
     else:
-        # Load model
-        checkpoint = torch.load(args.model_file)
         param_dict = checkpoint['param_dict']
         model_name = param_dict['model_name']
         input_type = param_dict['input_type']
         model = get_model(model_name, args.num_frame, input_type).cuda()
-        model.load_state_dict(checkpoint['model_state_dict'])
+
+    # Load model weights
+    model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
     process_all_videos(args.data_dir, model, args.num_frame, args.batch_size, args.save_dir, args.tolerance)
