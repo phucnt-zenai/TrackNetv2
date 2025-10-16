@@ -225,7 +225,7 @@ if __name__ == '__main__':
 
     checkpoint = torch.load(args.model_file)
     if args.prune:
-        model = torch.load(args.pruned_model_ckpt, weights_only=False)
+        model = torch.load(args.pruned_model_ckpt, weights_only=False).cuda()
     else:
         param_dict = checkpoint['param_dict']
         model_name = param_dict['model_name']
