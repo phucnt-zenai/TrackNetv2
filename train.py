@@ -107,6 +107,8 @@ if resume_pruning:
 else:
     model = get_model(model_name, num_frame, input_type).cuda()
     model_summary(model, model_name)
+
+print(f'Total params: {total_trainable_params(model)}, Latency: {inference_latency(model)}')
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 if not resume_training:
