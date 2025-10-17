@@ -28,13 +28,13 @@ The dataset url: https://www.kaggle.com/datasets/phuc25111/badminton-testset.
 Some results:
 | Checkpoint    | Params (M)      | Acc     | Precision     | Recall     | Latency (ms)     |
 |---------------|-----------------|---------|---------------|------------|-------------|
-| model_cur_8epochs_v2.pt     |<div align="center">10.15</div>| Dữ liệu 3 | Dữ liệu 4     | Dữ liệu 5  | Dữ liệu 6   |
-| model_cur_16epochs_v2.pt    |<div align="center">10.15</div>| Dữ liệu 9 | Dữ liệu 10    | Dữ liệu 11 | Dữ liệu 12  |
-| model_cur_24epochs_v2.pt    |<div align="center">10.15</div>| Dữ liệu 15| Dữ liệu 16    | Dữ liệu 17 | Dữ liệu 18  |
-| pruning_model_step_1.pt   | <div align="center">8.19</div>     | | Dữ liệu 22    | Dữ liệu 23 | Dữ liệu 24  |
-| pruning_model_step_2.pt    | <div align="center">6.47</div>    | Dữ liệu 27| Dữ liệu 28    | Dữ liệu 29 | Dữ liệu 30  |
-| pruning_model_step_3.pt    | <div align="center">4.96</div>     | Dữ liệu 33| Dữ liệu 34    | Dữ liệu 35 | Dữ liệu 36  |
-| pruning_model_step_4.pt   | <div align="center">3.64</div>      | 0.83 | 0.94    | 0.86 | 5.2  |
+| model_cur_8epochs_v2.pt     |<div align="center">10.15</div>   |<div align="center">0.84</div>|<div align="center">0.94</div>|<div align="center">0.87</div>|<div align="center">8.1</div>|
+| model_cur_16epochs_v2.pt    |<div align="center">10.15</div>   |<div align="center">0.84</div>|<div align="center">0.94</div>|<div align="center">0.88</div>|<div align="center">8.1</div>|
+| model_cur_24epochs_v2.pt    |<div align="center">10.15</div>   |<div align="center">0.84</div>|<div align="center">0.95</div>|<div align="center">0.87</div>|<div align="center">8.1</div>|
+| pruning_model_step_1.pt   | <div align="center">8.19</div>     |<div align="center">0.83</div>|<div align="center">0.95</div>|<div align="center">0.85</div>|<div align="center">7.8</div>|
+| pruning_model_step_2.pt    | <div align="center">6.47</div>    |<div align="center">0.84</div>|<div align="center">0.95</div>|<div align="center">0.86</div>|<div align="center">7.1</div>|
+| pruning_model_step_3.pt    | <div align="center">4.96</div>     |<div align="center">0.81</div>|<div align="center">0.94</div>|<div align="center">0.84</div>|<div align="center">5.9</div>|
+| pruning_model_step_4.pt   | <div align="center">3.64</div>      |<div align="center">0.83</div>|<div align="center">0.94</div>|<div align="center">0.86</div>|<div align="center">5.2</div>|
 
 
 
@@ -45,4 +45,4 @@ Some results:
 - Training: https://www.kaggle.com/code/nguyenthangphuc/tracknetv2-test-shuttlecock-finetune-fec3c6
 - Evaluation: https://www.kaggle.com/code/nguyenthangphuc/test-tracknetv2
 
-*This repo is as a part of VNPT_Media project*
+<!--*This repo is as a part of VNPT_Media project*-->
