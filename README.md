@@ -28,7 +28,7 @@ I use our self-annotated testset. They stems from public tournaments on Youtube.
 The dataset url: https://www.kaggle.com/datasets/phuc25111/badminton-testset.
 
 ```python
-python /kaggle/working/TrackNetv2/eval_on_Hau_checked.py --prune --model_file <checkpoint_url> --tolerance 5 --batch_size 8
+python eval_on_Hau_checked.py --prune --model_file <checkpoint_url> --tolerance 5 --batch_size 8
 ```
 
 Some results:
