@@ -218,22 +218,20 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_dir', type=str, default='pred_result')
     parser.add_argument('--tolerance', type=int, default=4)
-    parser.add_argument('--pruned_model_ckpt', type=str, default='/kaggle/input/architect-pruned-model-15per/pruning_model_step_1_epoch_5.pt')
     parser.add_argument('--prune', action='store_true', default=False)
 
     args = parser.parse_args()
 
-    checkpoint = torch.load(args.model_file)
+    
     if args.prune:
-        model = torch.load(args.pruned_model_ckpt, weights_only=False).cuda()
+        model = torch.load(args.model_file, weights_only=False).cuda()
     else:
+        checkpoint = torch.load(args.model_file)
         param_dict = checkpoint['param_dict']
         model_name = param_dict['model_name']
         input_type = param_dict['input_type']
         model = get_model(model_name, args.num_frame, input_type).cuda()
-
-    # Load model weights
-    model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
     process_all_videos(args.data_dir, model, args.num_frame, args.batch_size, args.save_dir, args.tolerance)
