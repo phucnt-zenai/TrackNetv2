@@ -106,9 +106,9 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
         x = get_frame_unit(frame_queue, num_frame)
 
         # === INFERENCE AND POST-PROCESSING ===
-        #coords_list = []
+        coords_list = []
 
-        #frame_start_time = time.time()
+        frame_start_time = time.time()
 
         with torch.no_grad():
             y_pred = model(x.cuda()).cpu().numpy()
@@ -123,43 +123,39 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
 
             cx, cy = get_object_center(pred_mask)
             cx_out, cy_out = int(cx * ratio), int(cy * ratio)
-            #vis = 1 if cx_out > 0 and cy_out > 0 else 0
+            vis = 1 if cx_out > 0 and cy_out > 0 else 0
 
-            #coords_list.append((frame_idx, img, pred_mask, cx_out, cy_out, vis))
-
-    frame_end_time = time.time()
-    total_frame_time = (frame_end_time - frame_start_time)
-
-    '''
-    frame_end_time = time.time()
-    total_frame_time = (frame_end_time - frame_start_time)
-
-    # === DRAWING, SAVING RESULTS, EVALUATION ===
-    for frame_idx, img, pred_mask, cx_out, cy_out, vis in coords_list:
+            coords_list.append((frame_idx, img, pred_mask, cx_out, cy_out, vis))
         
-        f.write(f"{frame_idx},{vis},{cx_out},{cy_out}\n")
-        if cx_out > 0 and cy_out > 0:
-            cv2.circle(img, (cx_out, cy_out), 5, (0, 0, 255), -1)
-        out.write(img)
-        
-        # Evaluate prediction
-        if frame_idx in gt_data:
-            vis_gt, x_gt, y_gt = gt_data[frame_idx]
-            gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
+        frame_end_time = time.time()
+        total_frame_time += (frame_end_time - frame_start_time)
 
-            if vis_gt == 1:
-                gx, gy = int(x_gt / ratio), int(y_gt / ratio)
-                gt_map[gy, gx] = 255
-                tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [gx, gy], tolerance)
-            else:
-                tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [0, 0], tolerance)
+        # === DRAWING, SAVING RESULTS, EVALUATION ===
+        for frame_idx, img, pred_mask, cx_out, cy_out, vis in coords_list:
+            
+            f.write(f"{frame_idx},{vis},{cx_out},{cy_out}\n")
+            if cx_out > 0 and cy_out > 0:
+                cv2.circle(img, (cx_out, cy_out), 5, (0, 0, 255), -1)
+            out.write(img)
+            
+            # Evaluate prediction
+            if frame_idx in gt_data:
+                vis_gt, x_gt, y_gt = gt_data[frame_idx]
+                gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
 
-            total_TP += tp
-            total_TN += tn
-            total_FP1 += fp1
-            total_FP2 += fp2
-            total_FN += fn
-    '''
+                if vis_gt == 1:
+                    gx, gy = int(x_gt / ratio), int(y_gt / ratio)
+                    gt_map[gy, gx] = 255
+                    tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [gx, gy], tolerance)
+                else:
+                    tp, tn, fp1, fp2, fn = get_confusion_matrix(pred_mask, gt_map, [0, 0], tolerance)
+
+                total_TP += tp
+                total_TN += tn
+                total_FP1 += fp1
+                total_FP2 += fp2
+                total_FN += fn
+    
     cap.release()
     out.release()
     f.close()
