@@ -11,10 +11,14 @@ Alternatively, you can use my work at:
  - https://www.kaggle.com/datasets/phuc25111/shuttlecock-tracknetv2-2
 
 ### Requirements
-`pip install -r requirements.txt`
+```python 
+pip install -r requirements.txt
+```
 
 ### Train TrackNet
-`python3 train.py --num_frame 3 --epochs 30 --batch_size 10 --learning_rate 0.001 --save_dir exp`
+```python
+python3 train.py --num_frame 3 --epochs 30 --batch_size 10 --learning_rate 0.001 --save_dir exp
+```
 
 There are also parameters for resuming or pruning. Please read carefully `train.py` to adjust properly.
 
@@ -23,7 +27,9 @@ I use our self-annotated testset. They stems from public tournaments on Youtube.
 
 The dataset url: https://www.kaggle.com/datasets/phuc25111/badminton-testset.
 
-`python /kaggle/working/TrackNetv2/eval_on_Hau_checked.py --prune --model_file <checkpoint_url> --tolerance 5 --batch_size 8`
+```python
+python /kaggle/working/TrackNetv2/eval_on_Hau_checked.py --prune --model_file <checkpoint_url> --tolerance 5 --batch_size 8
+```
 
 Some results:
 | Checkpoint    | Params (M)      | Acc     | Precision     | Recall     | Latency (ms)     |
