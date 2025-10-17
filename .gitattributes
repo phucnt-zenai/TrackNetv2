@@ -1,3 +1,12 @@
 models/model_best_v2.pt filter=lfs diff=lfs merge=lfs -text
 models/model_last.pt filter=lfs diff=lfs merge=lfs -text
 models/model_cur_8epochs_v2.pt filter=lfs diff=lfs merge=lfs -text
+models/ filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+models/full_architecture/model_cur_16epochs_v2.pt filter=lfs diff=lfs merge=lfs -text
+models/full_architecture/model_cur_24epochs_v2.pt filter=lfs diff=lfs merge=lfs -text
+models/full_architecture/model_cur_8epochs_v2.pt filter=lfs diff=lfs merge=lfs -text
+models/pruning/pruning_model_step_1.pt filter=lfs diff=lfs merge=lfs -text
+models/pruning/pruning_model_step_2.pt filter=lfs diff=lfs merge=lfs -text
+models/pruning/pruning_model_step_3.pt filter=lfs diff=lfs merge=lfs -text
+models/pruning/pruning_model_step_4.pt filter=lfs diff=lfs merge=lfs -text

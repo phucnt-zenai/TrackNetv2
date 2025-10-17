@@ -12,7 +12,6 @@ import math
 HEIGHT = 288
 WIDTH = 512
 
-
 def read_ground_truth(csv_file):
     gt_data = pd.read_csv(csv_file)
     ground_truth = {}
@@ -54,10 +53,10 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    # Ground truth
+    # Read ground truth
     gt_data = read_ground_truth(gt_csv)
 
-    # Video info
+    # Get video info
     cap = cv2.VideoCapture(video_file)
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -68,15 +67,15 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
     f.write('Frame,Visibility,X,Y\n')
 
     success = True
-    frame_count = 0  # counting variable to help frame_queue only contain num_frame*batch_size (3) frames in each iteration
+    frame_count = 0  # Frame counting variable for batching
 
     total_TP, total_TN, total_FP1, total_FP2, total_FN = 0, 0, 0, 0, 0
-    total_frame_time = 0  # Tổng thời gian cho mỗi frame
+    total_frame_time = 0  # Total processing time
 
-    ### Đọc Frames
+    # Read frames
     while success:
         frame_queue = []
-        for _ in range(num_frame * batch_size):  # 3*1 = 3 frames
+        for _ in range(num_frame * batch_size):  # e.g., 3*1 = 3 frames
             success, frame = cap.read()
             if not success:
                 break
@@ -88,12 +87,10 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
         
         if len(frame_queue) % num_frame != 0:
             frame_queue = []
-            # Record the length of remain frames
+            # Adjust frame counter
             num_final_frame = len(frame_queue)
-            # Adjust the sample timestampe of cap
             frame_count = frame_count - num_frame*batch_size
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count)
-            # Re-sample mini batch
             for _ in range(num_frame*batch_size):
                 success, frame = cap.read()
                 if not success:
@@ -103,11 +100,11 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                     frame_queue.append(frame)
             assert len(frame_queue) % num_frame == 0
 
-        # Concat 3 frames to form input: (B, H, W, 3*F)
+        # Prepare input tensor
         x = get_frame_unit(frame_queue, num_frame)
 
-        # ==== VÒNG FOR 1: chỉ inference và hậu xử lý ====
-        coords_list = []  # Lưu dữ liệu để xử lý ở vòng sau
+        # === INFERENCE AND POST-PROCESSING ===
+        coords_list = []
 
         frame_start_time = time.time()
 
@@ -126,25 +123,24 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
             cx_out, cy_out = int(cx * ratio), int(cy * ratio)
             vis = 1 if cx_out > 0 and cy_out > 0 else 0
 
-            # Chỉ lưu để dùng ở vòng sau
             coords_list.append((frame_idx, img, pred_mask, cx_out, cy_out, vis))
 
         frame_end_time = time.time()
         total_frame_time += (frame_end_time - frame_start_time)
 
-        # ==== VÒNG FOR 2: I/O, vẽ, ghi file, đánh giá ====
+        # === DRAWING, SAVING RESULTS, EVALUATION ===
         for frame_idx, img, pred_mask, cx_out, cy_out, vis in coords_list:
-            # Ghi kết quả ra file
+            # Write result to CSV
             f.write(f"{frame_idx},{vis},{cx_out},{cy_out}\n")
 
-            # Vẽ vòng tròn lên frame
+            # Draw prediction
             if cx_out > 0 and cy_out > 0:
                 cv2.circle(img, (cx_out, cy_out), 5, (0, 0, 255), -1)
 
-            # Ghi frame vào video
+            # Write frame to video
             out.write(img)
 
-            # Evaluate với ground truth
+            # Evaluate prediction
             if frame_idx in gt_data:
                 vis_gt, x_gt, y_gt = gt_data[frame_idx]
                 gt_map = np.zeros((HEIGHT, WIDTH), dtype='uint8')
@@ -162,21 +158,20 @@ def process_video(video_file, gt_csv, model, num_frame, batch_size, save_dir, in
                 total_FP2 += fp2
                 total_FN += fn
 
-
     cap.release()
     out.release()
     f.close()
 
-    # Tính toán thời gian trung bình của mỗi frame
+    # Average frame processing time
     avg_frame_time = total_frame_time / frame_count if frame_count > 0 else 0
-    print(f"[✓] Xử lý video {video_file} xong, thời gian trung bình cho mỗi frame: {avg_frame_time:.4f} giây")
+    print(f"[✓] Finished processing {video_file}, average time per frame: {avg_frame_time:.4f} seconds")
 
     return total_TP, total_TN, total_FP1, total_FP2, total_FN, avg_frame_time
 
 def process_all_videos(data_dir, model, num_frame, batch_size, save_dir, tolerance=4):
     total_TP = total_TN = total_FP1 = total_FP2 = total_FN = 0
-    total_frame_time_all = 0  # Tổng thời gian cho tất cả các frame
-    total_frame_count = 0  # Tổng số lượng frame đã xử lý
+    total_frame_time_all = 0
+    total_frame_count = 0
 
     for root, dirs, files in os.walk(data_dir):
         video_files = [f for f in files if f.endswith('.mp4')]
@@ -188,32 +183,31 @@ def process_all_videos(data_dir, model, num_frame, batch_size, save_dir, toleran
                 if file.endswith('.csv'):
                     csv_file = os.path.join(csv_dir, file)
             if not os.path.exists(csv_file):
-                print(f"[!] Thiếu ground truth CSV cho {video_path}")
+                print(f"[!] Missing ground truth CSV for {video_path}")
                 continue
-            print(f"[✓] Đang xử lý: {video_path}")
+            print(f"[✓] Processing: {video_path}")
             TP, TN, FP1, FP2, FN, avg_frame_time = process_video(video_path, csv_file, model, num_frame, batch_size, save_dir, tolerance)
             total_TP += TP
             total_TN += TN
             total_FP1 += FP1
             total_FP2 += FP2
             total_FN += FN
-            total_frame_time_all += avg_frame_time * (video_file.count('.mp4'))  # Lấy số lượng frame của video
+            total_frame_time_all += avg_frame_time * video_file.count('.mp4')
             total_frame_count += video_file.count('.mp4')
 
     acc, prec, rec = get_metric(total_TP, total_TN, total_FP1, total_FP2, total_FN)
     avg_frame_time_all = total_frame_time_all / total_frame_count if total_frame_count > 0 else 0
 
-    print("\n📊 Kết quả tổng hợp:")
+    print("\n📊 Summary:")
     print(f"Accuracy:  {acc:.4f}")
     print(f"Precision: {prec:.4f}")
     print(f"Recall:    {rec:.4f}")
-    print(f"⏱️ Thời gian trung bình mỗi frame: {avg_frame_time_all:.4f} giây")
-
+    print(f"⏱️ Average processing time per frame: {avg_frame_time_all:.4f} seconds")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='/kaggle/input/badminton-testset/checked/checked', help='Thư mục chứa match1/, match2/, ...')
-    parser.add_argument('--model_file', type=str, default='/kaggle/input/ckpt-tracknet/model_best_v2.pt')
+    parser.add_argument('--data_dir', type=str, default='/kaggle/input/badminton-testset/checked/checked', help='Directory containing match1/, match2/, ...')
+    parser.add_argument('--model_file', type=str, default='')
     parser.add_argument('--num_frame', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--save_dir', type=str, default='pred_result')
@@ -222,7 +216,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    
     if args.prune:
         model = torch.load(args.model_file, weights_only=False).cuda()
     else:

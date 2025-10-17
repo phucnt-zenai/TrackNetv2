@@ -77,6 +77,7 @@ class TrackNetV2(nn.Module):
         x = self.sigmoid(x)
         return  x
 
+### The below is the new model with SE Attention and Self-Attention mechanism, but I donot use because of insignificant improvements ###
 # SE Attention Block
 class SEAttention(nn.Module):
     def __init__(self, in_channels, reduction=16):
