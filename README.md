@@ -16,7 +16,7 @@ Alternatively, you can use my work at:
 ### Train TrackNet
 `python3 train.py --num_frame 3 --epochs 30 --batch_size 10 --learning_rate 0.001 --save_dir exp`
 
-There are also parameters for resuming or pruning. Please read carefully `train.py` to adapt properly.
+There are also parameters for resuming or pruning. Please read carefully `train.py` to adjust properly.
 
 ### Evaluate TrackNet
 I use our self-annotated testset. They stems from public tournaments on Youtube. 
