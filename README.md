@@ -38,7 +38,7 @@ Some results:
 
 
 
- *Note: I measured in batchsize `1`, if increase batchsize, you will gain a better mean latency. The latency herein is just the average per frame, meanwwhile we forward 3 frames per batch as model inputs.*
+ *Note: I measured in batchsize `1`, if increase batchsize, you will gain a better mean latency. The latency herein is just the average per frame, meanwhile we forward 3 frames per batch for model inputs.*
 
 
 ### Example code
